@@ -1,0 +1,43 @@
+name: Bug report
+description: Something isn't working as expected
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Include the language selected, DPI, model, and roughly what the source PDF looks like (e.g. "3-page scanned Bangla document, ~200 DPI") if relevant.
+      placeholder: |
+        1. Select PDF...
+        2. Set language to ...
+        3. Click Convert
+        4. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Copy any relevant lines from the app's log panel. Do NOT paste your API key.
+      render: text
+
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Which commit or release are you running?
+
+  - type: input
+    id: os
+    attributes:
+      label: Windows version
+      placeholder: e.g. Windows 11 23H2

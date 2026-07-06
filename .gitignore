@@ -48,3 +48,6 @@ appsettings.Development.json
 ## OS junk
 Thumbs.db
 .DS_Store
+
+## Internal dev notes not published in the public repo
+/CLAUDE.md

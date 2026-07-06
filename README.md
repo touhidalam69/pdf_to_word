@@ -1,5 +1,8 @@
 # PdfToWordOcr
 
+[![Build](https://github.com/touhidalam69/pdf_to_word/actions/workflows/build.yml/badge.svg)](https://github.com/touhidalam69/pdf_to_word/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A Windows desktop app that converts scanned PDFs — image-only, no text layer —
 into editable `.docx` files, in the language you choose. OCR is performed
 using the [Claude API](https://www.anthropic.com/api) (vision), not a local
@@ -7,9 +10,8 @@ OCR engine like Tesseract.
 
 ## Status
 
-Implemented per [CLAUDE.md](CLAUDE.md): Core (rasterizer, OCR client, docx
-writer, pipeline) and the WinForms app are both complete and build with zero
-warnings.
+Core (rasterizer, OCR client, docx writer, pipeline) and the WinForms app
+are both complete and build with zero warnings.
 
 ## How it works
 
@@ -69,6 +71,13 @@ dotnet run --project PdfToWordOcr.App
 - Parallel page OCR
 - Installer/MSIX packaging
 - Automatic language detection — you always pick the language explicitly
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for how
+to get set up and what to check before opening a PR. Please also read the
+[Code of Conduct](CODE_OF_CONDUCT.md). Security issues should go through
+[SECURITY.md](SECURITY.md) instead of a public issue.
 
 ## License
 
