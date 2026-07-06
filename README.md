@@ -1,9 +1,9 @@
-# PdfToWordBangla
+# PdfToWordOcr
 
-A Windows desktop app that converts scanned Bangla (Bengali) PDFs — image-only,
-no text layer — into editable `.docx` files. OCR is performed using the
-[Claude API](https://www.anthropic.com/api) (vision), not a local OCR engine
-like Tesseract.
+A Windows desktop app that converts scanned PDFs — image-only, no text layer —
+into editable `.docx` files, in the language you choose. OCR is performed
+using the [Claude API](https://www.anthropic.com/api) (vision), not a local
+OCR engine like Tesseract.
 
 ## Status
 
@@ -11,19 +11,21 @@ Specification complete ([CLAUDE.md](CLAUDE.md)); implementation in progress.
 
 ## How it works
 
-1. Select a scanned Bangla PDF.
+1. Select a scanned PDF and choose its language from a dropdown.
 2. The app rasterizes each page to an image.
 3. Each page image is sent to the Claude API for OCR, with a system prompt
-   tuned to transcribe Bangla script exactly (no translation, no summarizing).
-4. Transcribed text is assembled into a `.docx` with proper Bangla/complex-script
-   font settings, paragraph breaks, and page breaks matching the source PDF.
+   built from your selected language (no language is hardcoded — the app
+   works the same way regardless of which one you pick).
+4. Transcribed text is assembled into a `.docx` with proper complex-script
+   font settings for the selected language, paragraph breaks, and page breaks
+   matching the source PDF.
 
 ## Solution layout
 
 ```
-PdfToWordBangla.sln
-├── PdfToWordBangla.Core/   # class library — rasterizer, OCR client, docx writer, pipeline
-└── PdfToWordBangla.App/    # WinForms UI
+PdfToWordOcr.slnx
+├── PdfToWordOcr.Core/   # class library — rasterizer, OCR client, docx writer, pipeline
+└── PdfToWordOcr.App/    # WinForms UI
 ```
 
 ## Requirements
@@ -37,7 +39,7 @@ PdfToWordBangla.sln
 The app resolves your Anthropic API key in this order:
 
 1. `ANTHROPIC_API_KEY` environment variable
-2. A DPAPI-encrypted key file at `%APPDATA%\PdfToWordBangla\key.dat`
+2. A DPAPI-encrypted key file at `%APPDATA%\PdfToWordOcr\key.dat`
    (created via the in-app Settings dialog)
 3. If neither is present, the Settings dialog opens on startup and prompts for
    a key
@@ -48,13 +50,13 @@ repository.
 ## Building
 
 ```
-dotnet build PdfToWordBangla.sln
+dotnet build PdfToWordOcr.slnx
 ```
 
 ## Running
 
 ```
-dotnet run --project PdfToWordBangla.App
+dotnet run --project PdfToWordOcr.App
 ```
 
 ## Out of scope
@@ -64,6 +66,7 @@ dotnet run --project PdfToWordBangla.App
 - Batch/multi-file queue
 - Parallel page OCR
 - Installer/MSIX packaging
+- Automatic language detection — you always pick the language explicitly
 
 ## License
 

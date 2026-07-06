@@ -1,23 +1,26 @@
-# Task: Build "PdfToWordBangla" — WinForms app for scanned Bangla PDF → Word conversion
+# Task: Build "PdfToWordOcr" — WinForms app for scanned PDF → Word conversion (multi-language OCR)
 
 ## What this app does
-User selects a scanned PDF (image-only, no text layer, Bangla/Bengali content),
-clicks Convert, and gets a .docx with the OCR'd Unicode Bangla text. OCR is done
-via the Anthropic Messages API (vision) — NOT Tesseract.
+User selects a scanned PDF (image-only, no text layer), picks the document's
+language from a dropdown, clicks Convert, and gets a .docx with the OCR'd
+Unicode text in that language. OCR is done via the Anthropic Messages API
+(vision) — NOT Tesseract. The app is language-agnostic: the OCR prompt and
+the document's script/language tagging are driven entirely by the user's
+language selection, never hardcoded to one language.
 
 ## Solution structure — create exactly this
 
-PdfToWordBangla.sln
-├── PdfToWordBangla.Core/          # class library, net10.0, ZERO WinForms refs
+PdfToWordOcr.slnx
+├── PdfToWordOcr.Core/          # class library, net10.0, ZERO WinForms refs
 │   ├── Models/
-│   │   ├── ConversionOptions.cs   # record: InputPath, OutputPath, Model, Dpi, Font, ContinueOnPageFailure
+│   │   ├── ConversionOptions.cs   # record: InputPath, OutputPath, Model, Dpi, Font, Language, ContinueOnPageFailure
 │   │   ├── PageProgress.cs        # record: Completed, Total, Message
 │   │   └── ConversionResult.cs    # record: OutputPath, Pages, FailedPages (int[]), Elapsed
 │   ├── PdfRasterizer.cs
 │   ├── OcrClient.cs
 │   ├── DocxWriter.cs
 │   └── ConversionPipeline.cs
-└── PdfToWordBangla.App/           # WinForms exe, net10.0-windows
+└── PdfToWordOcr.App/           # WinForms exe, net10.0-windows
     ├── Forms/
     │   ├── MainForm.cs
     │   └── SettingsForm.cs
@@ -37,6 +40,7 @@ App:  references Core only. Use System.Text.Json (built-in) — no Newtonsoft.
 - Return per-page: byte[] data + media type ("image/png" or "image/jpeg").
 - Expose as IEnumerable<PageImage> or async enumerable — do NOT load all pages
   into memory at once for large PDFs; yield one at a time and dispose SKImage/SKBitmap.
+- This file is language-agnostic — it only handles rasterization.
 
 ### OcrClient.cs
 - Single long-lived HttpClient (injected or static) — never new HttpClient per call.
@@ -45,12 +49,13 @@ App:  references Core only. Use System.Text.Json (built-in) — no Newtonsoft.
 - Body:
   - model: from options (default "claude-sonnet-5")
   - max_tokens: 8000
-  - system prompt (use verbatim):
-    "You are an OCR engine for scanned Bangla (Bengali) documents. Transcribe
-    every character exactly as printed, in Unicode Bangla. Preserve paragraph
-    breaks (one blank line between paragraphs) and reading order. Do NOT
-    translate, correct, normalize, summarize, or add commentary. Output ONLY
-    the transcription. If the page is blank, output nothing."
+  - system prompt, built from the selected language (no language hardcoded —
+    substitute `{Language}` with ConversionOptions.Language verbatim):
+    "You are an OCR engine for scanned {Language} documents. Transcribe
+    every character exactly as printed, in Unicode {Language} script. Preserve
+    paragraph breaks (one blank line between paragraphs) and reading order. Do
+    NOT translate, correct, normalize, summarize, or add commentary. Output
+    ONLY the transcription. If the page is blank, output nothing."
   - messages: one user message containing an image block (base64, correct
     media_type) + text block "Transcribe this page."
 - Parse response: concatenate all content blocks where type == "text".
@@ -60,13 +65,21 @@ App:  references Core only. Use System.Text.Json (built-in) — no Newtonsoft.
 - Honor CancellationToken on every await.
 
 ### DocxWriter.cs
-- Input: List<string> pageTexts (one entry per PDF page), font name, output path.
-- CRITICAL — Bangla is a complex script. Every Run must set:
+- Input: List<string> pageTexts (one entry per PDF page), font name, selected
+  language, output path.
+- CRITICAL — many languages (e.g. Bangla, Hindi, Arabic, Urdu, Tamil) use
+  complex scripts. Every Run must set:
   - RunFonts { Ascii = font, HighAnsi = font, ComplexScript = font }
   - FontSize { Val = "24" } AND FontSizeComplexScript { Val = "24" }  // 12pt
-  - Languages { Val = "en-US", Bidi = "bn-BD" }
-  Omitting ComplexScript/FontSizeComplexScript breaks Bangla rendering in Word —
-  this is the #1 failure mode, do not skip it.
+  - Languages { Val = "en-US", Bidi = <BCP-47 tag for the selected language> }
+  Omitting ComplexScript/FontSizeComplexScript breaks complex-script rendering
+  in Word — this is the #1 failure mode, do not skip it. These properties are
+  harmless to set even for non-complex-script languages, so set them
+  unconditionally on every Run regardless of which language was selected.
+- Resolve the Bidi tag from a small static language-name → BCP-47 dictionary
+  (case-insensitive) covering the app's curated language list; fall back to
+  "en-US" for any language string that isn't recognized (free-typed values
+  included) — do not hardcode any single language's tag as the default.
 - Split each page's text on "\n\n" → separate Paragraphs. Single "\n" inside a
   paragraph → soft line break (Break element inside the Run).
 - Text elements: Space = SpaceProcessingModeValues.Preserve.
@@ -95,7 +108,14 @@ Controls:
 - txtOutputPath + browse button (SaveFileDialog, default = input name with .docx)
 - cmbModel: "claude-sonnet-5", "claude-haiku-4-5" (editable dropdown)
 - numDpi: 72–300, default 150
-- cmbFont: "Nirmala UI", "SolaimanLipi", "Kalpurush" (editable)
+- cmbLanguage: editable dropdown, curated list covering a range of scripts
+  (e.g. "English", "Bangla", "Hindi", "Urdu", "Arabic", "Tamil", "Nepali"),
+  default "English" — no language is privileged as a special case in code,
+  the default is just a starting selection the user can change or override
+  by typing any other language name.
+- cmbFont: editable dropdown, script-neutral defaults (e.g. "Nirmala UI",
+  "Arial", "Times New Roman") — not defaulted to any single language's fonts;
+  freely editable to any installed font regardless of selected language.
 - chkContinueOnFailure: checked by default
 - btnConvert, btnCancel, btnSettings
 - ProgressBar + status Label ("Page 4/12")
@@ -122,12 +142,12 @@ Threading — non-negotiable:
 ### SettingsForm + AppSettings
 - API key resolution order:
   1. ANTHROPIC_API_KEY environment variable
-  2. DPAPI-encrypted file %APPDATA%\PdfToWordBangla\key.dat
+  2. DPAPI-encrypted file %APPDATA%\PdfToWordOcr\key.dat
      (ProtectedData.Protect/Unprotect, DataProtectionScope.CurrentUser)
   3. If neither → open SettingsForm on startup and require entry
 - SettingsForm: masked TextBox for key, Save encrypts to key.dat.
   NEVER write the key to appsettings.json, logs, or plaintext anywhere.
-- appsettings.json (optional): default model/dpi/font only.
+- appsettings.json (optional): default model/dpi/font/language only.
 
 ### Project/csproj details
 - App: <TargetFramework>net10.0-windows</TargetFramework>, <UseWindowsForms>true</UseWindowsForms>
@@ -138,13 +158,18 @@ Threading — non-negotiable:
 1. Solution builds with zero warnings on net10.0.
 2. UI stays responsive during conversion (no Invoke deadlocks, no frozen window).
 3. Cancel mid-run → Cancelled state within one page, UI re-enabled, no orphan tasks.
-4. Output .docx opens in Word: Bangla text renders in the chosen font at 12pt,
-   conjuncts (যুক্তবর্ণ) intact, page breaks between source pages.
+4. Output .docx opens in Word: OCR'd text renders in the chosen font at 12pt
+   for the selected language, complex-script conjuncts/ligatures intact where
+   applicable, page breaks between source pages.
 5. Kill network mid-run with ContinueOnFailure on → placeholders written,
    FailedPages populated, app doesn't crash.
 6. API key survives app restart via DPAPI file; key never appears in any file in
    the repo or output.
 7. Selecting a non-PDF or corrupt file → friendly error, state returns to Idle.
+8. Switching the language dropdown changes OCR prompt language and the
+   document's Bidi language tag with no code path referencing a specific
+   language by name (other than the curated dropdown list and the BCP-47
+   mapping table).
 
 ## Explicitly out of scope (do not build)
 - Tesseract or any local OCR fallback
@@ -152,6 +177,7 @@ Threading — non-negotiable:
 - Batch/multi-file queue
 - Parallel page OCR
 - Installer/MSIX (plain build output is fine)
+- Auto-detecting the document's language — the user always selects it explicitly
 
 Work through Core first (rasterizer → OCR client → docx writer → pipeline),
 then the WinForms shell. Ask nothing — all decisions are specified above.
