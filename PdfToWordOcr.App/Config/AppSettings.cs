@@ -9,9 +9,13 @@ public sealed record AppDefaults(string Model, int Dpi, string Font, string Lang
     public static AppDefaults Default { get; } = new("claude-sonnet-5", 150, "Nirmala UI", "English");
 }
 
+/// <summary>Shape of the untracked, gitignored appsettings.local.json override file.</summary>
+public sealed record LocalSettings(string? ApiKey);
+
 public static class AppSettings
 {
     private const string SettingsFileName = "appsettings.json";
+    private const string LocalSettingsFileName = "appsettings.local.json";
 
     private static readonly string KeyFilePath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -20,6 +24,12 @@ public static class AppSettings
 
     public static string? TryGetApiKey()
     {
+        var localKey = TryReadLocalApiKey();
+        if (!string.IsNullOrWhiteSpace(localKey))
+        {
+            return localKey;
+        }
+
         var envKey = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
         return !string.IsNullOrWhiteSpace(envKey) ? envKey : TryReadEncryptedKey();
     }
@@ -51,6 +61,26 @@ public static class AppSettings
         catch (JsonException)
         {
             return AppDefaults.Default;
+        }
+    }
+
+    private static string? TryReadLocalApiKey()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, LocalSettingsFileName);
+        if (!File.Exists(path))
+        {
+            return null;
+        }
+
+        try
+        {
+            var json = File.ReadAllText(path);
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<LocalSettings>(json, options)?.ApiKey;
+        }
+        catch (JsonException)
+        {
+            return null;
         }
     }
 

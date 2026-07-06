@@ -13,9 +13,15 @@ dotnet build PdfToWordOcr.slnx
 dotnet run --project PdfToWordOcr.App
 ```
 
-Set your key via the `ANTHROPIC_API_KEY` environment variable, or enter it
-in the app's Settings dialog on first run (it's encrypted with DPAPI and
-stored under `%APPDATA%\PdfToWordOcr\`).
+Easiest for local dev: copy `PdfToWordOcr.App/appsettings.local.json.example`
+to `appsettings.local.json` and fill in `apiKey` — it's gitignored, so
+there's no risk of committing it by accident. You can also use the
+`ANTHROPIC_API_KEY` environment variable, or enter it in the app's Settings
+dialog on first run (encrypted with DPAPI, stored under
+`%APPDATA%\PdfToWordOcr\`).
+
+Never put a real key in the tracked `appsettings.json` — only
+`appsettings.local.json` (gitignored) is safe for that.
 
 ## Project layout
 

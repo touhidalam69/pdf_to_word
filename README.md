@@ -42,14 +42,17 @@ PdfToWordOcr.slnx
 
 The app resolves your Anthropic API key in this order:
 
-1. `ANTHROPIC_API_KEY` environment variable
-2. A DPAPI-encrypted key file at `%APPDATA%\PdfToWordOcr\key.dat`
-   (created via the in-app Settings dialog)
-3. If neither is present, the Settings dialog opens on startup and prompts for
-   a key
+1. `PdfToWordOcr.App/appsettings.local.json` — copy
+   `appsettings.local.json.example` to `appsettings.local.json` and fill in
+   `apiKey`. This file is gitignored and never committed.
+2. `ANTHROPIC_API_KEY` environment variable
+3. A DPAPI-encrypted key file at `%APPDATA%\PdfToWordOcr\key.dat`
+   (created via the in-app Settings dialog — encrypted, unlike option 1)
+4. If none of the above are present, the Settings dialog opens on startup
+   and prompts for a key
 
-The API key is never written to logs, `appsettings.json`, or any file in this
-repository.
+The API key is never written to logs or to the tracked `appsettings.json`,
+and never appears anywhere in this repository.
 
 ## Building
 
