@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.Http;
 using System.Threading;
 using PdfToWordOcr.App.Config;
@@ -37,6 +38,10 @@ public partial class MainForm : Form
         btnSelectPdf.Click += BtnSelectPdf_Click;
         btnConvert.Click += BtnConvert_Click;
         btnCancel.Click += BtnCancel_Click;
+        btnBrowseOutput.Click += BtnBrowseOutput_Click;
+        btnOpenOutput.Click += BtnOpenOutput_Click;
+        btnOpenFolder.Click += BtnOpenFolder_Click;
+        btnSettings.Click += BtnSettings_Click;
 
         SetState(AppState.Idle);
     }
@@ -173,6 +178,47 @@ public partial class MainForm : Form
         progressBar.Value = Math.Min(progress.Completed, progressBar.Maximum);
         lblStatus.Text = progress.Message;
         AppendLog(progress.Message);
+    }
+
+    private void BtnBrowseOutput_Click(object? sender, EventArgs e)
+    {
+        var defaultName = string.IsNullOrEmpty(txtOutputPath.Text) && _pdfPath is not null
+            ? Path.ChangeExtension(_pdfPath, ".docx")
+            : txtOutputPath.Text;
+
+        using var dialog = new SaveFileDialog
+        {
+            Filter = "Word document (*.docx)|*.docx",
+            FileName = defaultName,
+        };
+
+        if (dialog.ShowDialog(this) == DialogResult.OK)
+        {
+            txtOutputPath.Text = dialog.FileName;
+        }
+    }
+
+    private void BtnOpenOutput_Click(object? sender, EventArgs e)
+    {
+        if (File.Exists(txtOutputPath.Text))
+        {
+            Process.Start(new ProcessStartInfo(txtOutputPath.Text) { UseShellExecute = true });
+        }
+    }
+
+    private void BtnOpenFolder_Click(object? sender, EventArgs e)
+    {
+        var folder = Path.GetDirectoryName(txtOutputPath.Text);
+        if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
+        {
+            Process.Start(new ProcessStartInfo(folder) { UseShellExecute = true });
+        }
+    }
+
+    private void BtnSettings_Click(object? sender, EventArgs e)
+    {
+        using var settingsForm = new SettingsForm();
+        settingsForm.ShowDialog(this);
     }
 
     private void AppendLog(string message)
