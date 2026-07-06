@@ -1,0 +1,50 @@
+## .NET / Visual Studio
+bin/
+obj/
+out/
+publish/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]uild/
+
+## Rider / VS Code
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+
+## Test / coverage
+[Tt]est[Rr]esult*/
+*.trx
+coverage/
+*.coverage
+*.coveragexml
+
+## NuGet
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Secrets — never commit API keys or local overrides
+*.pfx
+*.key
+key.dat
+appsettings.local.json
+appsettings.Development.json
+.env
+.env.*
+
+## OS junk
+Thumbs.db
+.DS_Store
