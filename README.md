@@ -7,7 +7,9 @@ OCR engine like Tesseract.
 
 ## Status
 
-Specification complete ([CLAUDE.md](CLAUDE.md)); implementation in progress.
+Implemented per [CLAUDE.md](CLAUDE.md): Core (rasterizer, OCR client, docx
+writer, pipeline) and the WinForms app are both complete and build with zero
+warnings.
 
 ## How it works
 
