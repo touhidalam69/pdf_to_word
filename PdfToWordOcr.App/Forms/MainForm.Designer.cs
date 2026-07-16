@@ -22,10 +22,17 @@ partial class MainForm
     private ComboBox cmbFont;
 
     private CheckBox chkContinueOnFailure;
+    private Label lblFormat;
+    private ComboBox cmbFormat;
+    private Label lblMode;
+    private ComboBox cmbMode;
+    private CheckBox chkPilot;
+    private Label lblCostEstimate;
 
     private Button btnConvert;
     private Button btnCancel;
     private Button btnSettings;
+    private Button btnResetJob;
     private Button btnOpenOutput;
     private Button btnOpenFolder;
 
@@ -62,10 +69,17 @@ partial class MainForm
         cmbFont = new ComboBox();
 
         chkContinueOnFailure = new CheckBox();
+        lblFormat = new Label();
+        cmbFormat = new ComboBox();
+        lblMode = new Label();
+        cmbMode = new ComboBox();
+        chkPilot = new CheckBox();
+        lblCostEstimate = new Label();
 
         btnConvert = new Button();
         btnCancel = new Button();
         btnSettings = new Button();
+        btnResetJob = new Button();
         btnOpenOutput = new Button();
         btnOpenFolder = new Button();
 
@@ -113,7 +127,7 @@ partial class MainForm
         cmbModel.Location = new Point(80, 90);
         cmbModel.Size = new Size(160, 23);
         cmbModel.DropDownStyle = ComboBoxStyle.DropDown;
-        cmbModel.Items.AddRange(new object[] { "claude-sonnet-5", "claude-haiku-4-5" });
+        cmbModel.Items.AddRange(new object[] { "claude-sonnet-5", "claude-haiku-4-5", "claude-haiku-4-5-20251001" });
 
         lblDpi.Location = new Point(250, 94);
         lblDpi.Size = new Size(35, 15);
@@ -143,50 +157,83 @@ partial class MainForm
         cmbFont.DropDownStyle = ComboBoxStyle.DropDown;
         cmbFont.Items.AddRange(new object[] { "Nirmala UI", "Arial", "Times New Roman" });
 
-        // Row 4: Continue on failure
-        chkContinueOnFailure.Location = new Point(12, 128);
+        // Row 4: Format / Mode / Pilot / Continue on failure
+        lblFormat.Location = new Point(12, 132);
+        lblFormat.Size = new Size(60, 15);
+        lblFormat.Text = "Format:";
+
+        cmbFormat.Location = new Point(80, 128);
+        cmbFormat.Size = new Size(160, 23);
+        cmbFormat.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbFormat.Items.AddRange(new object[] { "Word (.docx)", "Markdown (.md)" });
+
+        lblMode.Location = new Point(250, 132);
+        lblMode.Size = new Size(40, 15);
+        lblMode.Text = "Mode:";
+
+        cmbMode.Location = new Point(290, 128);
+        cmbMode.Size = new Size(130, 23);
+        cmbMode.DropDownStyle = ComboBoxStyle.DropDownList;
+        cmbMode.Items.AddRange(new object[] { "Auto", "Synchronous", "Batch" });
+
+        chkPilot.Location = new Point(446, 128);
+        chkPilot.Size = new Size(170, 24);
+        chkPilot.Text = "Pilot (first 10 pages)";
+
+        chkContinueOnFailure.Location = new Point(636, 128);
         chkContinueOnFailure.Size = new Size(220, 24);
         chkContinueOnFailure.Text = "Continue on page failure";
         chkContinueOnFailure.Checked = true;
 
-        // Row 5: Action buttons
-        btnConvert.Location = new Point(12, 164);
-        btnConvert.Size = new Size(100, 30);
-        btnConvert.Text = "Convert";
+        // Row 5: Cost estimate
+        lblCostEstimate.Location = new Point(12, 162);
+        lblCostEstimate.Size = new Size(758, 15);
+        lblCostEstimate.Text = string.Empty;
+        lblCostEstimate.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
-        btnCancel.Location = new Point(120, 164);
+        // Row 6: Action buttons
+        btnConvert.Location = new Point(12, 188);
+        btnConvert.Size = new Size(100, 30);
+        btnConvert.Text = "Start";
+
+        btnCancel.Location = new Point(120, 188);
         btnCancel.Size = new Size(100, 30);
         btnCancel.Text = "Cancel";
         btnCancel.Enabled = false;
 
-        btnSettings.Location = new Point(228, 164);
+        btnSettings.Location = new Point(228, 188);
         btnSettings.Size = new Size(100, 30);
         btnSettings.Text = "Settings...";
 
-        btnOpenOutput.Location = new Point(558, 164);
+        btnResetJob.Location = new Point(336, 188);
+        btnResetJob.Size = new Size(100, 30);
+        btnResetJob.Text = "Reset job";
+        btnResetJob.Enabled = false;
+
+        btnOpenOutput.Location = new Point(558, 188);
         btnOpenOutput.Size = new Size(110, 30);
         btnOpenOutput.Text = "Open File";
         btnOpenOutput.Enabled = false;
         btnOpenOutput.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 
-        btnOpenFolder.Location = new Point(674, 164);
+        btnOpenFolder.Location = new Point(674, 188);
         btnOpenFolder.Size = new Size(96, 30);
         btnOpenFolder.Text = "Open Folder";
         btnOpenFolder.Enabled = false;
         btnOpenFolder.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 
-        // Row 6: Progress
-        progressBar.Location = new Point(12, 208);
+        // Row 7: Progress
+        progressBar.Location = new Point(12, 232);
         progressBar.Size = new Size(660, 23);
         progressBar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 
-        lblStatus.Location = new Point(680, 212);
+        lblStatus.Location = new Point(680, 236);
         lblStatus.Size = new Size(180, 15);
         lblStatus.Text = "Idle";
         lblStatus.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 
-        // Row 7: Log
-        txtLog.Location = new Point(12, 240);
+        // Row 8: Log
+        txtLog.Location = new Point(12, 264);
         txtLog.Size = new Size(848, 328);
         txtLog.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         txtLog.ReadOnly = true;
@@ -194,8 +241,8 @@ partial class MainForm
 
         // Form
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(872, 580);
-        MinimumSize = new Size(700, 400);
+        ClientSize = new Size(872, 604);
+        MinimumSize = new Size(700, 430);
         Controls.Add(btnSelectPdf);
         Controls.Add(txtPdfPath);
         Controls.Add(lblPageCount);
@@ -210,10 +257,17 @@ partial class MainForm
         Controls.Add(cmbLanguage);
         Controls.Add(lblFont);
         Controls.Add(cmbFont);
+        Controls.Add(lblFormat);
+        Controls.Add(cmbFormat);
+        Controls.Add(lblMode);
+        Controls.Add(cmbMode);
+        Controls.Add(chkPilot);
         Controls.Add(chkContinueOnFailure);
+        Controls.Add(lblCostEstimate);
         Controls.Add(btnConvert);
         Controls.Add(btnCancel);
         Controls.Add(btnSettings);
+        Controls.Add(btnResetJob);
         Controls.Add(btnOpenOutput);
         Controls.Add(btnOpenFolder);
         Controls.Add(progressBar);
