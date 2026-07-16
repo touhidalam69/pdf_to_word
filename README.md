@@ -4,32 +4,59 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A Windows desktop app that converts scanned PDFs — image-only, no text layer —
-into editable `.docx` files, in the language you choose. OCR is performed
-using the [Claude API](https://www.anthropic.com/api) (vision), not a local
-OCR engine like Tesseract.
+into editable `.docx` or `.md` files, in the language you choose. OCR is
+performed using the [Claude API](https://www.anthropic.com/api) (vision), not
+a local OCR engine like Tesseract.
 
 ## Status
 
-Core (rasterizer, OCR client, docx writer, pipeline) and the WinForms app
-are both complete and build with zero warnings.
+Core (rasterizer, OCR clients, docx/Markdown writers, pipelines) and the
+WinForms app are complete and build with zero warnings. Very large PDFs
+(1000+ pages) are supported through a resumable batch mode.
 
 ## How it works
 
 1. Select a scanned PDF and choose its language from a dropdown.
 2. The app rasterizes each page to an image.
-3. Each page image is sent to the Claude API for OCR, with a system prompt
-   built from your selected language (no language is hardcoded — the app
-   works the same way regardless of which one you pick).
-4. Transcribed text is assembled into a `.docx` with proper complex-script
-   font settings for the selected language, paragraph breaks, and page breaks
-   matching the source PDF.
+3. Each page image is sent to the Claude API for OCR, with a prompt built
+   from your selected language (no language is hardcoded — the app works the
+   same way regardless of which one you pick).
+4. Transcribed text is assembled into a `.docx` (with proper complex-script
+   font settings, paragraph breaks, and page breaks) or a `.md` (with
+   headings, lists, and tables preserved).
+
+Small PDFs are converted synchronously, page by page. Above 50 pages (or on
+request), the app switches to **batch mode**.
+
+## Large PDFs — batch mode, resume, and pilot
+
+Batch mode submits pages to the
+[Message Batches API](https://platform.claude.com/docs/en/build-with-claude/batch-processing)
+in chunks of 200 — half the token price of synchronous calls, and built for
+exactly this workload.
+
+- **Checkpointing:** all progress lives in a `{input}.pdf.work\` directory
+  next to the input (rasterized pages, per-page OCR text, a job manifest, a
+  log). Killing the app at any point loses nothing: submitted batches keep
+  processing on Anthropic's servers and are collected the next time you
+  press Start. The Start button reads **Resume** when saved progress exists,
+  and **Reset job** discards it.
+- **Pilot mode:** convert only the first 10 pages (`*.pilot.md` /
+  `*.pilot.docx`) to check OCR quality and prompt fit cheaply before
+  committing to the whole book. Pilot results are reused by the full run.
+- **Retry:** pages that fail (truncation, refusals, API errors) are retried
+  for up to three cycles. Pages that still fail are reported by number, and
+  the output is not written until they succeed or you reset the job.
+- **Cost estimate:** a rough per-run estimate is shown after selecting a
+  PDF, based on current batch pricing for the selected model.
 
 ## Solution layout
 
 ```
 PdfToWordOcr.slnx
-├── PdfToWordOcr.Core/   # class library — rasterizer, OCR client, docx writer, pipeline
-└── PdfToWordOcr.App/    # WinForms UI
+├── PdfToWordOcr.Core/    # class library — rasterizer, OCR clients, writers, pipelines
+├── PdfToWordOcr.App/     # WinForms UI
+└── PdfToWordOcr.Tests/   # xunit tests (batch parsing, stitching, resume)
 ```
 
 ## Requirements
@@ -69,9 +96,9 @@ dotnet run --project PdfToWordOcr.App
 ## Out of scope
 
 - Local OCR fallback (Tesseract, etc.)
-- Table/column/image layout reconstruction — plain paragraphs only
-- Batch/multi-file queue
-- Parallel page OCR
+- Layout reconstruction beyond Markdown structure — no column/image layout
+- Multi-file queue (batch mode covers one large PDF at a time)
+- Parallel synchronous OCR (batch mode already parallelizes server-side)
 - Installer/MSIX packaging
 - Automatic language detection — you always pick the language explicitly
 
