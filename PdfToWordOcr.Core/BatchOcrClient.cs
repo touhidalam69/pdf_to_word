@@ -118,8 +118,7 @@ public sealed class BatchOcrClient
                 status = await GetStatusAsync(batchId, ct).ConfigureAwait(false);
                 consecutiveFailures = 0;
             }
-            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException
-                && !ct.IsCancellationRequested)
+            catch (Exception ex) when (!ct.IsCancellationRequested && IsTransient(ex))
             {
                 if (++consecutiveFailures >= MaxConsecutivePollFailures)
                 {
@@ -252,6 +251,17 @@ public sealed class BatchOcrClient
         writer.WriteEndObject();
         await writer.FlushAsync(ct).ConfigureAwait(false);
     }
+
+    /// <summary>Worth re-polling: transport errors, timeouts, 429, and 5xx. Definite
+    /// client errors (404 for an expired batch, etc.) must propagate to the caller.</summary>
+    private static bool IsTransient(Exception ex) => ex switch
+    {
+        TaskCanceledException => true,
+        HttpRequestException { StatusCode: null } => true,
+        HttpRequestException { StatusCode: HttpStatusCode.TooManyRequests } => true,
+        HttpRequestException { StatusCode: { } status } => (int)status >= 500,
+        _ => false,
+    };
 
     private void AddHeaders(HttpRequestMessage request)
     {

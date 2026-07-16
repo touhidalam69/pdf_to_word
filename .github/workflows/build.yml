@@ -25,3 +25,6 @@ jobs:
 
       - name: Build (warnings as errors)
         run: dotnet build PdfToWordOcr.slnx --configuration Release --no-restore -warnaserror
+
+      - name: Test
+        run: dotnet test PdfToWordOcr.slnx --configuration Release --no-build --verbosity normal

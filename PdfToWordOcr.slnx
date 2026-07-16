@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="PdfToWordOcr.App/PdfToWordOcr.App.csproj" />
   <Project Path="PdfToWordOcr.Core/PdfToWordOcr.Core.csproj" />
+  <Project Path="PdfToWordOcr.Tests/PdfToWordOcr.Tests.csproj" />
 </Solution>
