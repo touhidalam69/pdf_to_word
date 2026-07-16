@@ -210,7 +210,8 @@ public partial class MainForm : Form
             ContinueOnPageFailure: chkContinueOnFailure.Checked,
             Format: SelectedFormat,
             Mode: SelectedMode,
-            Pilot: chkPilot.Checked);
+            Pilot: chkPilot.Checked,
+            PromptTemplate: AppSettings.GetPromptTemplate(SelectedFormat));
 
         var progress = new Progress<PageProgress>(OnProgress);
         var syncClient = new OcrClient(SharedHttpClient, apiKey);

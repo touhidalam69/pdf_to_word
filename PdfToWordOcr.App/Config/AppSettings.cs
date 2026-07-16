@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using PdfToWordOcr.Core.Models;
 
 namespace PdfToWordOcr.App.Config;
 
@@ -12,6 +13,17 @@ public sealed record AppDefaults(string Model, int Dpi, string Font, string Lang
 /// <summary>Shape of the untracked, gitignored appsettings.local.json override file.</summary>
 public sealed record LocalSettings(string? ApiKey);
 
+/// <summary>
+/// Per-user preferences stored in %APPDATA%\PdfToWordOcr\settings.json.
+/// Never holds the API key — that stays in the DPAPI file or the gitignored
+/// local override. Null template = use the built-in default.
+/// </summary>
+public sealed class UserSettings
+{
+    public string? WordPromptTemplate { get; set; }
+    public string? MarkdownPromptTemplate { get; set; }
+}
+
 public static class AppSettings
 {
     private const string SettingsFileName = "appsettings.json";
@@ -21,6 +33,51 @@ public static class AppSettings
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "PdfToWordOcr",
         "key.dat");
+
+    private static readonly string UserSettingsPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+        "PdfToWordOcr",
+        "settings.json");
+
+    public static UserSettings LoadUserSettings()
+    {
+        if (!File.Exists(UserSettingsPath))
+        {
+            return new UserSettings();
+        }
+
+        try
+        {
+            var json = File.ReadAllText(UserSettingsPath);
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<UserSettings>(json, options) ?? new UserSettings();
+        }
+        catch (JsonException)
+        {
+            return new UserSettings();
+        }
+    }
+
+    public static void SaveUserSettings(UserSettings settings)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(UserSettingsPath)!);
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+        };
+        File.WriteAllText(UserSettingsPath, JsonSerializer.Serialize(settings, options));
+    }
+
+    /// <summary>The user's template override for the given format, or null for the built-in default.</summary>
+    public static string? GetPromptTemplate(OutputFormat format)
+    {
+        var settings = LoadUserSettings();
+        var template = format == OutputFormat.Markdown
+            ? settings.MarkdownPromptTemplate
+            : settings.WordPromptTemplate;
+        return string.IsNullOrWhiteSpace(template) ? null : template;
+    }
 
     public static string? TryGetApiKey()
     {
