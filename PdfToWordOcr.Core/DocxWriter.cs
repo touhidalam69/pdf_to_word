@@ -18,6 +18,25 @@ public static class DocxWriter
             ["Nepali"] = "ne-NP",
         };
 
+    /// <summary>Batch-mode entry point: assembles the document from the work directory's per-page OCR files.</summary>
+    public static void WriteFromWorkDir(JobWorkspace workspace, int totalPages, string font, string language, string outputPath)
+    {
+        var missing = workspace.GetPendingPages(totalPages);
+        if (missing.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"Cannot write output: page(s) {string.Join(", ", missing)} have no OCR text yet. Run Retry first.");
+        }
+
+        var pageTexts = new List<string?>(totalPages);
+        for (var pageNumber = 1; pageNumber <= totalPages; pageNumber++)
+        {
+            pageTexts.Add(workspace.ReadOcrText(pageNumber));
+        }
+
+        Write(pageTexts, font, language, outputPath);
+    }
+
     public static void Write(IReadOnlyList<string?> pageTexts, string font, string language, string outputPath)
     {
         var bidiTag = LanguageBidiTags.TryGetValue(language, out var tag) ? tag : "en-US";

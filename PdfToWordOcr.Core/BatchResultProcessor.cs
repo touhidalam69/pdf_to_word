@@ -68,7 +68,17 @@ public static class BatchResultProcessor
             return new BatchPageResult(customId, BatchResultKind.Truncated, string.Empty, "truncated");
         }
 
-        var text = StripFencePair(ExtractText(message)).Trim();
+        return ClassifyText(customId, ExtractText(message), language);
+    }
+
+    /// <summary>
+    /// Normalizes and classifies a model transcription (fence stripping, the
+    /// [BLANK] sentinel, the refusal heuristic). Shared with the synchronous
+    /// retry path so retried pages match batch output exactly.
+    /// </summary>
+    public static BatchPageResult ClassifyText(string customId, string rawText, string language)
+    {
+        var text = StripFencePair(rawText).Trim();
 
         if (text.Length == 0 || string.Equals(text, OcrPrompts.BlankSentinel, StringComparison.Ordinal))
         {
