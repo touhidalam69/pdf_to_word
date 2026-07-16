@@ -25,13 +25,15 @@ public sealed class OcrClient
         string model,
         string language,
         int pageNumber,
-        CancellationToken ct)
+        CancellationToken ct,
+        string? systemPromptOverride = null,
+        int maxTokens = 8000)
     {
         var requestBody = new
         {
             model,
-            max_tokens = 8000,
-            system = BuildSystemPrompt(language),
+            max_tokens = maxTokens,
+            system = systemPromptOverride ?? BuildSystemPrompt(language),
             messages = new object[]
             {
                 new
