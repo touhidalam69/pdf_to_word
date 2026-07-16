@@ -70,6 +70,14 @@ public static class FailureRetrier
             ct.ThrowIfCancellationRequested();
 
             var stem = JobWorkspace.PageStem(pageNumber);
+            if (!workspace.HasPageImage(pageNumber))
+            {
+                // Rasterization failed earlier (already in failures.txt) — nothing to send.
+                workspace.Log($"Page {pageNumber} has no rasterized image; skipping retry.");
+                done++;
+                continue;
+            }
+
             var image = new PageImage(
                 await File.ReadAllBytesAsync(workspace.PageImagePath(pageNumber), ct).ConfigureAwait(false),
                 "image/jpeg");

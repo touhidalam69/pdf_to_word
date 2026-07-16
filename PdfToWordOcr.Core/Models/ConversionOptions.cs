@@ -10,4 +10,5 @@ public sealed record ConversionOptions(
     bool ContinueOnPageFailure,
     OutputFormat Format = OutputFormat.Word,
     ProcessingMode Mode = ProcessingMode.Auto,
-    bool Pilot = false);
+    bool Pilot = false,
+    string? PromptTemplate = null);
