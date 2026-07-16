@@ -7,4 +7,7 @@ public sealed record ConversionOptions(
     int Dpi,
     string Font,
     string Language,
-    bool ContinueOnPageFailure);
+    bool ContinueOnPageFailure,
+    OutputFormat Format = OutputFormat.Word,
+    ProcessingMode Mode = ProcessingMode.Auto,
+    bool Pilot = false);
